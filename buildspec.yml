@@ -21,5 +21,6 @@ phases:
       - LAYER_VERSION=$(aws lambda list-layer-versions --layer-name dependencias --query 'LayerVersions[0].Version' --output text)
       - echo "Actualizar con código y dependencias nuevas"
       - aws lambda update-function-code --function-name prueba --zip-file fileb://deployment_package.zip || exit 1
+      - aws lambda wait function-updated --function-name prueba
       - aws lambda update-function-configuration --function-name prueba --layers arn:aws:lambda:us-east-1:891377103104:layer:dependencias:$LAYER_VERSION || exit 1 # IMPORTANTE: cambiar nombre si se cambia de cuenta de AWS
       - echo "Finalizado"
