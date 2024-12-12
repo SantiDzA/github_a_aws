@@ -6,11 +6,11 @@ phases:
     commands:
       - echo "Instalación de dependencias"
       - mkdir -p python  # Prepare folder for Lambda layer
-      - pip install -r requirements.txt -t python
+      - pip install -r requirements.txt -t python --no-cache-dir
   build:
     commands:
       - echo "Paquetes con dependencias y código"
-      - zip -r9 dependencies_layer.zip python || exit 1
+      - zip -r9 dependencies_layer.zip python -x "*/__pycache__/*" "*.dist-info/*" "*.egg-info/*" || exit 1
       - zip -r9 deployment_package.zip lambda_function.py || exit 1
       - du -sh dependencies_layer.zip
   post_build:
