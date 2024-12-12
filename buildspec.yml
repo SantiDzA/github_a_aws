@@ -12,6 +12,7 @@ phases:
       - echo "Paquetes con dependencias y código"
       - zip -r9 dependencies_layer.zip python || exit 1
       - zip -r9 deployment_package.zip lambda_function.py || exit 1
+      - du -sh dependencies_layer.zip
   post_build:
     commands:
       - echo "Actualizar capa de la Lambda"
