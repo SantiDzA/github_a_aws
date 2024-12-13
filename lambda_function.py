@@ -34,6 +34,12 @@ def lambda_handler(event, context):
     csv_buffer = StringIO()  # Usamos un buffer en memoria
     final_stock_values.to_csv(csv_buffer, index=False)  # Convertir DataFrame a CSV y guardarlo en el buffer
 
+    #Eliminar el CSV antiguo (nota cambiada!!!!)
+    try:
+        s3.delete_object(Bucket=BUCKET_NAME, Key=CSV_FILENAME)
+    except:
+        print("No se pudo eliminar el archivo original")
+        
     # Subir el CSV al bucket de S3
     s3.put_object(Bucket=BUCKET_NAME, Key=CSV_FILENAME, Body=csv_buffer.getvalue())
 
