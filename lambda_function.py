@@ -13,7 +13,7 @@ CSV_FILENAME = 'stocks_data.csv'
 
 def lambda_handler(event, context):
     # Datos
-    start_time = (pd.Timestamp.today() - pd.DateOffset(months=6)).strftime('%Y-%m-%d')
+    start_time = (pd.Timestamp.today() - pd.DateOffset(years=1)).strftime('%Y-%m-%d')
     end_time = pd.Timestamp.today().strftime('%Y-%m-%d')
     acciones = ['^IBEX','^GSPC','^N225']
     stock_list = []
