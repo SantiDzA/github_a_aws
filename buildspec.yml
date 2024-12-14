@@ -1,7 +1,7 @@
 version: 0.2
 env:
   variables:
-    NOMBRE_LAMBDA: "prueba"
+    NOMBRE_LAMBDA: "prueba2"
     CAPA_PD_YF: "capa_pd_yf"
     LAYER_PREFIX: "arn:aws:lambda:us-east-1:891377103104:layer"
     REGION: "us-east-1"
@@ -31,6 +31,7 @@ phases:
           aws iam create-role --role-name $ROL_LAMBDA_NAME --assume-role-policy-document file://politicas_lambda.json;
           aws iam attach-role-policy --role-name $ROL_LAMBDA_NAME --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole;
         else
+          echo "Rol ya existe"
         fi
       - echo "Creando la Lambda si no existe"
       - aws lambda create-function --function-name $NOMBRE_LAMBDA --runtime python3.13 --role arn:aws:iam::$COD_USER:role/$ROL_LAMBDA_NAME --handler lambda_function.lambda_handler --zip-file fileb://deployment_package.zip --timeout 30 --memory-size 256 || true 
