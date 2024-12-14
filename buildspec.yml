@@ -1,10 +1,11 @@
 version: 0.2
 env:
-  NOMBRE_LAMBDA: "prueba"
-  CAPA_PD_YF: "capa_pd_yf"
-  LAYER_PREFIX: "arn:aws:lambda:us-east-1:891377103104:layer"
-  REGION: "us-east-1"
-  ROL_LAMBDA: "arn:aws:iam::891377103104:role/service-role/prueba-role-4cz7nc1e"
+  variables:
+    NOMBRE_LAMBDA: "prueba"
+    CAPA_PD_YF: "capa_pd_yf"
+    LAYER_PREFIX: "arn:aws:lambda:us-east-1:891377103104:layer"
+    REGION: "us-east-1"
+    ROL_LAMBDA: "arn:aws:iam::891377103104:role/service-role/prueba-role-4cz7nc1e"
 phases:
   install:
     runtime-versions:
