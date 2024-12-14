@@ -29,7 +29,7 @@ phases:
       - aws lambda publish-layer-version --layer-name $CAPA_PD_YF --zip-file fileb://dependencies_layer.zip --compatible-runtimes python3.13 || exit 1
       
       - echo "Número de la última versión"
-      - LAYER_VERSION=$(aws lambda list-layer-versions --layer-name dependencias --query 'LayerVersions[0].Version' --output text)
+      - LAYER_VERSION=$(aws lambda list-layer-versions --layer-name $CAPA_PD_YF --query 'LayerVersions[0].Version' --output text)
       
       - echo "Actualizar con código y dependencias nuevas"
       - aws lambda update-function-code --function-name $NOMBRE_LAMBDA --zip-file fileb://deployment_package.zip || exit 1
