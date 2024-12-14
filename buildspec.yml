@@ -28,7 +28,7 @@ phases:
       - |
         if ! aws s3api head-bucket --bucket $NOMBRE_BUCKET >/dev/null 2>&1; then
           echo "Bucket S3 no existe, creando";
-          aws s3api create-bucket --bucket $NOMBRE_BUCKET --region $REGION --create-bucket-configuration LocationConstraint=$REGION
+          aws s3api create-bucket --bucket $NOMBRE_BUCKET --region $REGION
         else
           echo "Bucket S3 ya existe"
         fi
