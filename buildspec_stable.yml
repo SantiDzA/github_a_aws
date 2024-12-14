@@ -1,0 +1,26 @@
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+      python: 3.13  
+    commands:
+      - echo "Instalación de dependencias"
+      - mkdir -p python  # Prepare folder for Lambda layer
+      - pip install -r requirements.txt -t python --no-cache-dir
+  build:
+    commands:
+      - echo "Paquetes con dependencias y código"
+      - zip -r9 dependencies_layer.zip python -x "*/__pycache__/*" "*.dist-info/*" "*.egg-info/*" || exit 1
+      - zip -r9 deployment_package.zip lambda_function.py || exit 1
+      - du -sh dependencies_layer.zip
+  post_build:
+    commands:
+      - echo "Actualizar capa de la Lambda"
+      - aws lambda publish-layer-version --layer-name dependencias --zip-file fileb://dependencies_layer.zip --compatible-runtimes python3.13 || exit 1
+      - echo "Número de la última versión"
+      - LAYER_VERSION=$(aws lambda list-layer-versions --layer-name dependencias --query 'LayerVersions[0].Version' --output text)
+      - echo "Actualizar con código y dependencias nuevas"
+      - aws lambda update-function-code --function-name prueba --zip-file fileb://deployment_package.zip || exit 1
+      - aws lambda wait function-updated --function-name prueba
+      - aws lambda update-function-configuration --function-name prueba --layers arn:aws:lambda:us-east-1:891377103104:layer:dependencias:$LAYER_VERSION || exit 1 # IMPORTANTE: cambiar nombre si se cambia de cuenta de AWS
+      - echo "Finalizado"
