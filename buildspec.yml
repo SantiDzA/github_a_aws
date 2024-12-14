@@ -1,11 +1,15 @@
 version: 0.2
+env:
+  NOMBRE_LAMBDA: "prueba"
+  CAPA_PD_YF: "capa_pd_yf"
+  LAYER_PREFIX: "arn:aws:lambda:us-east-1:891377103104:layer"
 phases:
   install:
     runtime-versions:
       python: 3.13  
     commands:
       - echo "Instalación de dependencias"
-      - mkdir -p python  # Prepare folder for Lambda layer
+      - mkdir -p python
       - pip install -r requirements.txt -t python --no-cache-dir
   build:
     commands:
@@ -15,12 +19,19 @@ phases:
       - du -sh dependencies_layer.zip
   post_build:
     commands:
+      - if ! aws lambda get-function --function-name $NOMBRE_LAMBDA >/dev/null 2>&1; then
+        echo "Creando Lambda..."
+          -- aws lambda create-function --function-name $NOMBRE_LAMBDA --runtime python3.13 --role FIXME --handler lambda_function.lambda_handler
+        else
+          -- echo "La Lambda ya existe"
+        fi
       - echo "Actualizar capa de la Lambda"
-      - aws lambda publish-layer-version --layer-name dependencias --zip-file fileb://dependencies_layer.zip --compatible-runtimes python3.13 || exit 1
+      - aws lambda publish-layer-version --layer-name $CAPA_PD_YF --zip-file fileb://dependencies_layer.zip --compatible-runtimes python3.13 || exit 1
       - echo "Número de la última versión"
       - LAYER_VERSION=$(aws lambda list-layer-versions --layer-name dependencias --query 'LayerVersions[0].Version' --output text)
       - echo "Actualizar con código y dependencias nuevas"
-      - aws lambda update-function-code --function-name prueba --zip-file fileb://deployment_package.zip || exit 1
-      - aws lambda wait function-updated --function-name prueba
-      - aws lambda update-function-configuration --function-name prueba --layers arn:aws:lambda:us-east-1:891377103104:layer:dependencias:$LAYER_VERSION || exit 1 # IMPORTANTE: cambiar nombre si se cambia de cuenta de AWS
+      - aws lambda update-function-code --function-name $NOMBRE_LAMBDA --zip-file fileb://deployment_package.zip || exit 1
+      - aws lambda wait function-updated --function-name $NOMBRE_LAMBDA
+      - aws lambda update-function-configuration --function-name $NOMBRE_LAMBDA --layers $LAYER_PREFIX:$CAPA_PD_YF:$LAYER_VERSION || exit 1
+      
       - echo "Finalizado"
