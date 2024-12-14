@@ -28,7 +28,8 @@ phases:
       - |
         if ! aws iam get-role --role-name $ROL_LAMBDA_NAME >/dev/null 2>&1; then
           echo "Rol no existe, creando"
-          aws iam create-role --role-name $ROL_LAMBDA_NAME --assume-role-policy-document file://politicas_lambda.json;
+          aws iam create-role --role-name $ROL_LAMBDA_NAME --assume-role-policy-document file://trust-politica.json;
+          aws iam put-role-policy --role-name $ROL_LAMBDA_NAME --policy-name S3AccesoCompleto --policy-document file://s3-politica.json;
           aws iam attach-role-policy --role-name $ROL_LAMBDA_NAME --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole;
         else
           echo "Rol ya existe"
