@@ -3,6 +3,8 @@ env:
   NOMBRE_LAMBDA: "prueba"
   CAPA_PD_YF: "capa_pd_yf"
   LAYER_PREFIX: "arn:aws:lambda:us-east-1:891377103104:layer"
+  REGION: "us-east-1"
+  ROL_LAMBDA: "arn:aws:iam::891377103104:role/service-role/prueba-role-4cz7nc1e"
 phases:
   install:
     runtime-versions:
@@ -19,17 +21,15 @@ phases:
       - du -sh dependencies_layer.zip
   post_build:
     commands:
-      - |
-        if ! aws lambda get-function --function-name $NOMBRE_LAMBDA >/dev/null 2>&1; then
-          echo "Creando Lambda..."
-          aws lambda create-function --function-name $NOMBRE_LAMBDA --runtime python3.13 --role FIXME --handler lambda_function.lambda_handler
-        else
-          echo "La Lambda ya existe"
-        fi
+      - echo "Creando la Lambda si no existe"
+      - aws lambda create-function --function-name $NOMBRE_LAMBDA --runtime python3.13 --role $ROL_LAMBDA --handler lambda_function.lambda_handler --zip-file fileb://deployment_package.zip --timeout 30 --memory-size 256 || true 
+      
       - echo "Actualizar capa de la Lambda"
       - aws lambda publish-layer-version --layer-name $CAPA_PD_YF --zip-file fileb://dependencies_layer.zip --compatible-runtimes python3.13 || exit 1
+      
       - echo "Número de la última versión"
       - LAYER_VERSION=$(aws lambda list-layer-versions --layer-name dependencias --query 'LayerVersions[0].Version' --output text)
+      
       - echo "Actualizar con código y dependencias nuevas"
       - aws lambda update-function-code --function-name $NOMBRE_LAMBDA --zip-file fileb://deployment_package.zip || exit 1
       - aws lambda wait function-updated --function-name $NOMBRE_LAMBDA
