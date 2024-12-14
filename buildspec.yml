@@ -20,7 +20,7 @@ phases:
   post_build:
     commands:
       - if ! aws lambda get-function --function-name $NOMBRE_LAMBDA >/dev/null 2>&1; then
-        echo "Creando Lambda..."
+          -- echo "Creando Lambda..."
           -- aws lambda create-function --function-name $NOMBRE_LAMBDA --runtime python3.13 --role FIXME --handler lambda_function.lambda_handler
         else
           -- echo "La Lambda ya existe"
