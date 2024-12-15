@@ -61,3 +61,15 @@ def lambda_handler(event, context):
         'statusCode': 200,
         'body': json.dumps(f'Datos guardados exitosamente en la tabla {DYNAMODB_TABLE_NAME}')
     }
+
+def invocar_siguiente():
+    print("Entrando al invocador")
+    client = boto3.client('lambda')
+    try:
+        client.invoke(
+            FunctionName="ejecutar_notebook",
+            InvocationType='Event'
+        )
+        print(f"Lambda 'ejecutar_notebook' invocada exitosamente.")
+    except Exception as e:
+        print(f"Error al invocar Lambda 'ejecutar_notebook': {str(e)}")

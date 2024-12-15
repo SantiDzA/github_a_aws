@@ -46,12 +46,14 @@ phases:
         else
           echo "Base de datos DynamoDB ya existe."
         fi
+
       - echo "Crear S3 si no existe"
       - |
         if ! aws s3api head-bucket --bucket $NOMBRE_BUCKET >/dev/null 2>&1; then
           echo "Bucket S3 no existe, creando. También añadimos el archivo ZIP con el paquete statsmodels";
           aws s3api create-bucket --bucket $NOMBRE_BUCKET --region $REGION
           aws s3api put-object --bucket $NOMBRE_BUCKET --key layers_lambda/
+          aws s3api put-object --bucket $NOMBRE_BUCKET --key datos/
           cd statsmodel_package
           aws s3 cp statsmodels_package.zip s3://$NOMBRE_BUCKET/layers_lambda/
           cd ..
@@ -61,19 +63,19 @@ phases:
 
       ################################################################
       ################################################################
-      # CREACIÓN DE ROLES. FIXME: ¿hacen falta los aws iam get-role de después de los ifs?
+      # CREACIÓN DE ROLES.
       - echo "Crear roles si no existen"
       - |
         if ! aws iam get-role --role-name $ROL_L_DDB >/dev/null 2>&1; then
           echo "Rol para interactuar con DDB no existe, creando"
           aws iam create-role --role-name $ROL_L_DDB --assume-role-policy-document file://trust-politica.json;
           aws iam put-role-policy --role-name $ROL_L_DDB --policy-name DDBAccesoCompleto --policy-document file://ddb-politica.json;
+          aws iam put-role-policy --role-name $ROL_L_DDB --policy-name LambdaInvocar --policy-document file://invocar-lambda-politica.json;
           aws iam attach-role-policy --role-name $ROL_L_DDB --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole;
           sleep 10 # Esperar por si acaso
         else
           echo "Rol ya existe"
         fi
-      #aws iam get-role --role-name $ROL_L_DDB --query 'Role.AssumeRolePolicyDocument' --output json
 
       - |
         if ! aws iam get-role --role-name $ROL_L_DDB_S3 >/dev/null 2>&1; then
@@ -81,12 +83,24 @@ phases:
           aws iam create-role --role-name $ROL_L_DDB_S3 --assume-role-policy-document file://trust-politica.json;
           aws iam put-role-policy --role-name $ROL_L_DDB_S3 --policy-name DDBAccesoCompleto --policy-document file://ddb-politica.json;
           aws iam put-role-policy --role-name $ROL_L_DDB_S3 --policy-name S3AccesoCompleto --policy-document file://s3-politica.json;
+          aws iam put-role-policy --role-name $ROL_L_DDB --policy-name LambdaInvocar --policy-document file://invocar-lambda-politica.json;
           aws iam attach-role-policy --role-name $ROL_L_DDB_S3 --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole;
           sleep 10 # Esperar por si acaso
         else
           echo "Rol ya existe"
         fi
-      #aws iam get-role --role-name $ROL_L_DDB_S3 --query 'Role.AssumeRolePolicyDocument' --output json
+
+      - |
+      if ! aws iam get-role --role-name $ROL_L_S3_ATH >/dev/null 2>&1; then
+          echo "Rol para interactuar con Athena y S3 no existe, creando"
+          aws iam create-role --role-name $ROL_L_S3_ATH --assume-role-policy-document file://trust-politica.json;
+          aws iam put-role-policy --role-name $ROL_L_S3_ATH --policy-name S3AccesoCompleto --policy-document file://s3-politica.json;
+          aws iam attach-role-policy --role-name $ROL_L_S3_ATH --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole;
+          aws iam attach-role-policy --role-name $ROL_L_S3_ATH --policy-arn arn:aws:iam::aws:policy/service-role/AmazonAthenaFullAccess;
+          sleep 10 # Esperar por si acaso
+        else
+          echo "Rol ya existe"
+        fi
 
       ################################################################
       ################################################################
@@ -131,7 +145,7 @@ phases:
       - |
         if ! aws lambda get-function --function-name $TERCERA_LAMBDA >/dev/null 2>&1; then
           echo "Función no existe, creando"
-          aws lambda create-function --function-name $TERCERA_LAMBDA --runtime python3.13 --role arn:aws:iam::$COD_USER:role/$ROL_L_DDB --handler lambda_s3_to_athena.lambda_handler --zip-file fileb://lambda_s3_athena.zip --timeout 30 --memory-size 256
+          aws lambda create-function --function-name $TERCERA_LAMBDA --runtime python3.13 --role arn:aws:iam::$COD_USER:role/$ROL_L_S3_ATH --handler lambda_s3_to_athena.lambda_handler --zip-file fileb://lambda_s3_athena.zip --timeout 30 --memory-size 256
           aws lambda wait function-active --function-name $TERCERA_LAMBDA
         else
           echo "Función ya creada, actualizando..."
