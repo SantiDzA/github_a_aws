@@ -5,7 +5,6 @@ env:
     SEGUNDA_LAMBDA: "ejecutar_notebook"
     TERCERA_LAMBDA: "s3_a_athena"
     CAPA_PD_YF: "capa_pd_yf"
-    LAYER_PF: "arn:aws:lambda:us-east-1:"
     REGION: "us-east-1"
     ROL_PRIMERA_LAMBDA: "rol_primera_lambda"
     NOMBRE_BUCKET: "almacenamiento-primario"
@@ -89,7 +88,7 @@ phases:
           aws lambda update-function-code --function-name $PRIMERA_LAMBDA --zip-file fileb://lambda_yfinance_s3.zip || exit 1
           aws lambda wait function-updated --function-name $PRIMERA_LAMBDA
         fi
-        aws lambda update-function-configuration --function-name $PRIMERA_LAMBDA --layers $LAYER_PF$COD_USER:layer$CAPA_PD_YF:$LAYER_VERSION || exit 1
+        aws lambda update-function-configuration --function-name $PRIMERA_LAMBDA --layers arn:aws:lambda:us-east-1:$COD_USER:layer:$CAPA_PD_YF:$LAYER_VERSION || exit 1
 
       - echo "Actualizar la Lambda Ejecutar Notebook, si no crearla"
       - |
