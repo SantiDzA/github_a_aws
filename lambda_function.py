@@ -34,7 +34,7 @@ def lambda_handler(event, context):
     csv_buffer = StringIO()
     final_stock_values.to_csv(csv_buffer, index=False)
 
-    #Eliminar el CSV antiguo
+    #Eliminar el CSV antiguo ###
     try:
         s3.delete_object(Bucket=BUCKET_NAME, Key=CSV_FILENAME)
     except:
