@@ -63,6 +63,7 @@ phases:
         if ! aws lambda get-function --function-name $PRIMERA_LAMBDA >/dev/null 2>&1; then
           echo "Función no existe, creando"
           aws lambda create-function --function-name $PRIMERA_LAMBDA --runtime python3.13 --role arn:aws:iam::$COD_USER:role/$ROL_PRIMERA_LAMBDA --handler lambda_function.lambda_handler --zip-file fileb://lambda_yfinance_s3.zip --timeout 30 --memory-size 256
+          aws lambda wait function-active --function-name $PRIMERA_LAMBDA
         else
           echo "Función ya creada, actualizando..."
           aws lambda update-function-code --function-name $PRIMERA_LAMBDA --zip-file fileb://lambda_yfinance_s3.zip || exit 1
@@ -75,6 +76,7 @@ phases:
         if ! aws lambda get-function --function-name $SEGUNDA_LAMBDA >/dev/null 2>&1; then
           echo "Función no existe, creando"
           aws lambda create-function --function-name $SEGUNDA_LAMBDA --runtime python3.13 --role arn:aws:iam::$COD_USER:role/$ROL_PRIMERA_LAMBDA --handler lambda_function.lambda_handler --zip-file fileb://lambda_ejecutar_notebook.zip --timeout 30 --memory-size 256
+          aws lambda wait function-active --function-name $SEGUNDA_LAMBDA
         else
           echo "Función ya creada, actualizando..."
           aws lambda update-function-code --function-name $SEGUNDA_LAMBDA --zip-file fileb://lambda_ejecutar_notebook.zip || exit 1
@@ -86,6 +88,7 @@ phases:
         if ! aws lambda get-function --function-name $TERCERA_LAMBDA >/dev/null 2>&1; then
           echo "Función no existe, creando"
           aws lambda create-function --function-name $TERCERA_LAMBDA --runtime python3.13 --role arn:aws:iam::$COD_USER:role/$ROL_PRIMERA_LAMBDA --handler lambda_function.lambda_handler --zip-file fileb://lambda_s3_athena.zip --timeout 30 --memory-size 256
+          aws lambda wait function-active --function-name $TERCERA_LAMBDA
         else
           echo "Función ya creada, actualizando..."
           aws lambda update-function-code --function-name $TERCERA_LAMBDA --zip-file fileb://lambda_s3_athena.zip || exit 1
