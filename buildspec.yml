@@ -8,6 +8,7 @@ env:
     REGION: "us-east-1"
     ROL_L_DDB: "rol_l_ddb"
     ROL_L_DDB_S3: "rol_l_ddb_s3"
+    ROL_L_S3_ATH: "rol_l_s3_ath"
     NOMBRE_BUCKET: "almacenamiento-primario"
     DDB_NAME: "my_finance_table"
 phases:
@@ -54,6 +55,7 @@ phases:
           aws s3api create-bucket --bucket $NOMBRE_BUCKET --region $REGION
           aws s3api put-object --bucket $NOMBRE_BUCKET --key layers_lambda/
           aws s3api put-object --bucket $NOMBRE_BUCKET --key datos/
+          aws s3api put-object --bucket $NOMBRE_BUCKET --key query_results/
           cd statsmodel_package
           aws s3 cp statsmodels_package.zip s3://$NOMBRE_BUCKET/layers_lambda/
           cd ..
