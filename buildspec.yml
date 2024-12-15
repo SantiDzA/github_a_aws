@@ -73,26 +73,26 @@ phases:
         else
           echo "Rol ya existe"
         fi
-        aws iam get-role --role-name $ROL_L_DDB --query 'Role.AssumeRolePolicyDocument' --output json
+      #aws iam get-role --role-name $ROL_L_DDB --query 'Role.AssumeRolePolicyDocument' --output json
 
       - |
         if ! aws iam get-role --role-name $ROL_L_DDB_S3 >/dev/null 2>&1; then
           echo "Rol para interactuar con DDB y S3 no existe, creando"
           aws iam create-role --role-name $ROL_L_DDB_S3 --assume-role-policy-document file://trust-politica.json;
           aws iam put-role-policy --role-name $ROL_L_DDB_S3 --policy-name DDBAccesoCompleto --policy-document file://ddb-politica.json;
-          aws iam put-role-policy --role-name $ROL_L_DDB_S3 --policy-name DDBAccesoCompleto --policy-document file://s3-politica.json;
+          aws iam put-role-policy --role-name $ROL_L_DDB_S3 --policy-name S3AccesoCompleto --policy-document file://s3-politica.json;
           aws iam attach-role-policy --role-name $ROL_L_DDB_S3 --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole;
           sleep 10 # Esperar por si acaso
         else
           echo "Rol ya existe"
         fi
-        aws iam get-role --role-name $ROL_L_DDB_S3 --query 'Role.AssumeRolePolicyDocument' --output json
+      #aws iam get-role --role-name $ROL_L_DDB_S3 --query 'Role.AssumeRolePolicyDocument' --output json
 
       ################################################################
       ################################################################
       # CAPAS DE LA LAMBDA
       - echo "Actualizar capas de la Lambda"
-      - aws lambda publish-layer-version --layer-name $CAPA_PD_YF --zip-file fileb://dependencies_layer.zip --compatible-runtimes python3.13 || exit 1
+      - aws lambda publish-layer-version --layer-name $CAPA_PD_YF --zip-file fileb://dependencies_layer.zip --compatible-runtimes python3.13
       - LAYER_VERSION=$(aws lambda list-layer-versions --layer-name $CAPA_PD_YF --query 'LayerVersions[0].Version' --output text)
 
       ################################################################
