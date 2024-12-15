@@ -20,6 +20,8 @@ phases:
       - echo "Instalación de dependencias"
       - mkdir -p python
       - pip install -r requirements.txt -t python --no-cache-dir
+      - mkdir -p statsmodel_package
+      - pip install statsmodels -t statsmodel_package --no-cache-dir
   build:
     commands:
       - echo "Paquetes con dependencias y código"
@@ -27,12 +29,15 @@ phases:
       - zip -r9 lambda_yfinance_s3.zip lambda_yfinance_to_dynamo.py || exit 1
       - zip -r9 lambda_ejecutar_notebook.zip lambda_ejecutar_notebook.py || exit 1
       - zip -r9 lambda_s3_athena.zip lambda_s3_to_athena.py || exit 1
-      - du -sh dependencies_layer.zip
+      - cd statsmodels_package
+      - zip -r9 ../statsmodels_package.zip -x "*/__pycache__/*" "*.dist-info/*" "*.egg-info/*" || exit 1
+      - aws s3 cp statsmodels_package.zip s3://$NOMBRE_BUCKET/layers_lambda/statsmodels_package.zip
   post_build:
     commands:
       ################################################################
       ################################################################
       # CREACIÓN DE BASES DE DATOS, S3...
+      # FIXME: crear carpeta y meter el ejecutable de SageMaker
       - echo "Crear DynamoDB si no existe"
       - |
         if ! aws dynamodb describe-table --table-name $DDB_NAME --region $REGION >/dev/null 2>&1; then
@@ -81,7 +86,7 @@ phases:
       - |
         if ! aws lambda get-function --function-name $PRIMERA_LAMBDA >/dev/null 2>&1; then
           echo "Función no existe, creando"
-          aws lambda create-function --function-name $PRIMERA_LAMBDA --runtime python3.13 --role arn:aws:iam::$COD_USER:role/$ROL_PRIMERA_LAMBDA --handler lambda_yfinance_tp_dynamo.lambda_handler --zip-file fileb://lambda_yfinance_s3.zip --timeout 30 --memory-size 256
+          aws lambda create-function --function-name $PRIMERA_LAMBDA --runtime python3.13 --role arn:aws:iam::$COD_USER:role/$ROL_PRIMERA_LAMBDA --handler lambda_yfinance_to_dynamo.lambda_handler --zip-file fileb://lambda_yfinance_s3.zip --timeout 30 --memory-size 256
           aws lambda wait function-active --function-name $PRIMERA_LAMBDA
         else
           echo "Función ya creada, actualizando..."
@@ -101,6 +106,8 @@ phases:
           aws lambda update-function-code --function-name $SEGUNDA_LAMBDA --zip-file fileb://lambda_ejecutar_notebook.zip || exit 1
           aws lambda wait function-updated --function-name $SEGUNDA_LAMBDA
         fi
+        aws lambda update-function-configuration --function-name $SEGUNDA_LAMBDA --layers arn:aws:lambda:us-east-1:$COD_USER:layer:$CAPA_PD_YF:$LAYER_VERSION || exit 1
+
 
       - echo "Actualizar la Lambda S3 to Athena, si no crearla"
       - |
