@@ -31,10 +31,10 @@ def lambda_handler(event, context):
     final_stock_values = pd.merge(final_stock_values, stock_list[2], how='left', on='fecha')
 
     # Convertir el DataFrame a CSV
-    csv_buffer = StringIO()  # Usamos un buffer en memoria
-    final_stock_values.to_csv(csv_buffer, index=False)  # Convertir DataFrame a CSV y guardarlo en el buffer
+    csv_buffer = StringIO()
+    final_stock_values.to_csv(csv_buffer, index=False)
 
-    #Eliminar el CSV antiguo (nota cambiada!!!!)
+    #Eliminar el CSV antiguo
     try:
         s3.delete_object(Bucket=BUCKET_NAME, Key=CSV_FILENAME)
     except:
