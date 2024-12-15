@@ -139,8 +139,6 @@ phases:
         fi
         aws lambda update-function-configuration --function-name $SEGUNDA_LAMBDA --layers arn:aws:lambda:us-east-1:$COD_USER:layer:$CAPA_PD_YF:$LAYER_VERSION || exit 1
 
-
-      #FIXME por hacer
       - echo "Actualizar la Lambda S3 to Athena, si no crearla"
       - |
         if ! aws lambda get-function --function-name $TERCERA_LAMBDA >/dev/null 2>&1; then
@@ -153,5 +151,4 @@ phases:
           aws lambda wait function-updated --function-name $TERCERA_LAMBDA
         fi
         
-      
       - echo "Finalizado"
