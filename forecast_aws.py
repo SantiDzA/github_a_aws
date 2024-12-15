@@ -1,6 +1,15 @@
-import pandas as pd
-from pmdarima import auto_arima
-from io import StringIO
+
+print("Importando...")
+s3_client = boto3.client('s3')
+s3_client.download_file("almacenamiento-primario", 'layers_lambda/statsmodels_layer.zip', '/tmp/statsmodels_layer.zip')
+print("Descargado con éxito")
+with zipfile.ZipFile('/tmp/statsmodels_layer.zip', 'r') as zip_ref:
+    zip_ref.extractall('/tmp/')
+sys.path.append('/tmp/python')
+print("Extraído con éxito")
+import statsmodels
+#from pmdarima import auto_arima
+print("Importado con éxito")
 
 def main():
     # Conexiones con DynamoDB
