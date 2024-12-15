@@ -1,15 +1,14 @@
 import pandas as pd
 import yfinance as yf
 import boto3
-from io import StringIO
 import json
+from decimal import Decimal
 
-# Cliente para S3
-s3 = boto3.client('s3')
+# Cliente para DynamoDB
+dynamodb = boto3.resource('dynamodb')
 
-# Nombre del bucket de S3 y el nombre del archivo
-BUCKET_NAME = 'almacenamiento-primario'
-CSV_FILENAME = 'stocks_data.csv'
+# Nombre de la tabla de DynamoDB
+DYNAMODB_TABLE_NAME = 'my_finance_table'
 
 def lambda_handler(event, context):
     # Datos
@@ -30,20 +29,35 @@ def lambda_handler(event, context):
     final_stock_values = pd.merge(stock_list[0], stock_list[1], how='left', on='fecha')
     final_stock_values = pd.merge(final_stock_values, stock_list[2], how='left', on='fecha')
 
-    # Convertir el DataFrame a CSV
-    csv_buffer = StringIO()
-    final_stock_values.to_csv(csv_buffer, index=False)
+    # Conectar a la tabla de DynamoDB
+    table = dynamodb.Table(DYNAMODB_TABLE_NAME)
 
-    #Eliminar el CSV antiguo 12344
-    try:
-        s3.delete_object(Bucket=BUCKET_NAME, Key=CSV_FILENAME)
-    except:
-        print("No se pudo eliminar el archivo original")
-        
-    # Subir el CSV al bucket de S3
-    s3.put_object(Bucket=BUCKET_NAME, Key=CSV_FILENAME, Body=csv_buffer.getvalue())
+    # Eliminar los datos previos de la tabla basados en la fecha
+    for index, row in final_stock_values.iterrows():
+        fecha = str(row['fecha'])[:10]  # Convertir la fecha a formato string
+        table.delete_item(
+            Key={
+                'fecha': fecha
+            }
+        )
+
+    # Guardar cada fila del DataFrame en DynamoDB
+    for index, row in final_stock_values.iterrows():
+        # Convertir los valores a tipos compatibles con DynamoDB (Decimal para números)
+        item = {
+            'fecha': str(row['fecha'])[:10],  # Asegurarse de que la fecha esté en formato de cadena
+            'CLOSE_IBEX': Decimal(str(row['CLOSE_^IBEX'])) if pd.notna(row['CLOSE_^IBEX']) else None,
+            'CLOSE_GSPC': Decimal(str(row['CLOSE_^GSPC'])) if pd.notna(row['CLOSE_^GSPC']) else None,
+            'CLOSE_N225': Decimal(str(row['CLOSE_^N225'])) if pd.notna(row['CLOSE_^N225']) else None
+        }
+
+        # Filtrar None antes de insertar en DynamoDB
+        item = {k: v for k, v in item.items() if v is not None}
+
+        # Insertar cada fila en la tabla
+        table.put_item(Item=item)
 
     return {
         'statusCode': 200,
-        'body': json.dumps(f'Datos guardados exitosamente en {CSV_FILENAME} dentro del bucket {BUCKET_NAME}')
+        'body': json.dumps(f'Datos guardados exitosamente en la tabla {DYNAMODB_TABLE_NAME}')
     }

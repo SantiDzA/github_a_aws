@@ -9,6 +9,7 @@ env:
     REGION: "us-east-1"
     ROL_PRIMERA_LAMBDA: "rol_primera_lambda"
     NOMBRE_BUCKET: "almacenamiento-primario"
+    DDB_NAME: "my_finance_table"
 phases:
   install:
     runtime-versions:
@@ -30,6 +31,17 @@ phases:
       - du -sh dependencies_layer.zip
   post_build:
     commands:
+      ################################################################
+      ################################################################
+      # CREACIÓN DE BASES DE DATOS, S3...
+      - echo "Crear DynamoDB si no existe"
+      - |
+        if ! aws dynamodb describe-table --table-name $DDB_NAME --region $REGION >/dev/null 2>&1; then
+          aws dynamodb create-table --table-name $DDB_NAME --attribute-definitions AttributeName=fecha,AttributeType=S --key-schema AttributeName=fecha,KeyType=HASH
+          aws dynamodb wait table-exists --table-name $DDB_NAME --region $REGION
+        else
+          echo "Base de datos DynamoDB ya existe."
+        fi
       - echo "Crear S3 si no existe"
       - |
         if ! aws s3api head-bucket --bucket $NOMBRE_BUCKET >/dev/null 2>&1; then
@@ -39,12 +51,15 @@ phases:
           echo "Bucket S3 ya existe"
         fi
 
+      ################################################################
+      ################################################################
+      # CREACIÓN DE ROLES FIXME
       - echo "Crear roles si no existen"
       - |
         if ! aws iam get-role --role-name $ROL_PRIMERA_LAMBDA >/dev/null 2>&1; then
           echo "Rol no existe, creando"
           aws iam create-role --role-name $ROL_PRIMERA_LAMBDA --assume-role-policy-document file://trust-politica.json;
-          aws iam put-role-policy --role-name $ROL_PRIMERA_LAMBDA --policy-name S3AccesoCompleto --policy-document file://s3-politica.json;
+          aws iam put-role-policy --role-name $ROL_PRIMERA_LAMBDA --policy-name DDBAccesoCompleto --policy-document file://ddb-politica.json;
           aws iam attach-role-policy --role-name $ROL_PRIMERA_LAMBDA --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole;
           sleep 10 # Esperar por si acaso
         else
@@ -52,10 +67,12 @@ phases:
         fi
         aws iam get-role --role-name $ROL_PRIMERA_LAMBDA --query 'Role.AssumeRolePolicyDocument' --output json
 
+      ################################################################
+      ################################################################
+      # CAPAS DE LA LAMBDA
       - echo "Actualizar capas de la Lambda"
       - aws lambda publish-layer-version --layer-name $CAPA_PD_YF --zip-file fileb://dependencies_layer.zip --compatible-runtimes python3.13 || exit 1
       - LAYER_VERSION=$(aws lambda list-layer-versions --layer-name $CAPA_PD_YF --query 'LayerVersions[0].Version' --output text)
-
 
       ################################################################
       ################################################################
@@ -65,7 +82,7 @@ phases:
       - |
         if ! aws lambda get-function --function-name $PRIMERA_LAMBDA >/dev/null 2>&1; then
           echo "Función no existe, creando"
-          aws lambda create-function --function-name $PRIMERA_LAMBDA --runtime python3.13 --role arn:aws:iam::$COD_USER:role/$ROL_PRIMERA_LAMBDA --handler lambda_function.lambda_handler --zip-file fileb://lambda_yfinance_s3.zip --timeout 30 --memory-size 256
+          aws lambda create-function --function-name $PRIMERA_LAMBDA --runtime python3.13 --role arn:aws:iam::$COD_USER:role/$ROL_PRIMERA_LAMBDA --handler lambda_yfinance_tp_dynamo.lambda_handler --zip-file fileb://lambda_yfinance_s3.zip --timeout 30 --memory-size 256
           aws lambda wait function-active --function-name $PRIMERA_LAMBDA
         else
           echo "Función ya creada, actualizando..."
@@ -78,7 +95,7 @@ phases:
       - |
         if ! aws lambda get-function --function-name $SEGUNDA_LAMBDA >/dev/null 2>&1; then
           echo "Función no existe, creando"
-          aws lambda create-function --function-name $SEGUNDA_LAMBDA --runtime python3.13 --role arn:aws:iam::$COD_USER:role/$ROL_PRIMERA_LAMBDA --handler lambda_function.lambda_handler --zip-file fileb://lambda_ejecutar_notebook.zip --timeout 30 --memory-size 256
+          aws lambda create-function --function-name $SEGUNDA_LAMBDA --runtime python3.13 --role arn:aws:iam::$COD_USER:role/$ROL_PRIMERA_LAMBDA --handler lambda_ejecutar_notebook.lambda_handler --zip-file fileb://lambda_ejecutar_notebook.zip --timeout 30 --memory-size 256
           aws lambda wait function-active --function-name $SEGUNDA_LAMBDA
         else
           echo "Función ya creada, actualizando..."
@@ -90,7 +107,7 @@ phases:
       - |
         if ! aws lambda get-function --function-name $TERCERA_LAMBDA >/dev/null 2>&1; then
           echo "Función no existe, creando"
-          aws lambda create-function --function-name $TERCERA_LAMBDA --runtime python3.13 --role arn:aws:iam::$COD_USER:role/$ROL_PRIMERA_LAMBDA --handler lambda_function.lambda_handler --zip-file fileb://lambda_s3_athena.zip --timeout 30 --memory-size 256
+          aws lambda create-function --function-name $TERCERA_LAMBDA --runtime python3.13 --role arn:aws:iam::$COD_USER:role/$ROL_PRIMERA_LAMBDA --handler lambda_s3_to_athena.lambda_handler --zip-file fileb://lambda_s3_athena.zip --timeout 30 --memory-size 256
           aws lambda wait function-active --function-name $TERCERA_LAMBDA
         else
           echo "Función ya creada, actualizando..."
