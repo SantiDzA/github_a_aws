@@ -30,7 +30,8 @@ phases:
       - zip -r9 lambda_ejecutar_notebook.zip lambda_ejecutar_notebook.py || exit 1
       - zip -r9 lambda_s3_athena.zip lambda_s3_to_athena.py || exit 1
       - cd statsmodel_package
-      - zip -r9 statsmodels_package.zip statsmodel_package/python -x "*/__pycache__/*" "*.dist-info/*" "*.egg-info/*"
+      - zip -r9 statsmodels_package.zip python -x "*/__pycache__/*" "*.dist-info/*" "*.egg-info/*"
+      - cd ..
       - aws s3 cp statsmodels_package.zip s3://$NOMBRE_BUCKET/layers_lambda/statsmodels_package.zip
   post_build:
     commands:
