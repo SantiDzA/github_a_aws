@@ -43,6 +43,7 @@ phases:
         else
           echo "Rol ya existe"
         fi
+        aws iam get-role --role-name $ROL_LAMBDA_NAME --query 'Role.AssumeRolePolicyDocument' --output json
         
       - echo "Crear la Lambda si no existe"
       - |
