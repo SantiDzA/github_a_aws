@@ -91,7 +91,7 @@ phases:
         fi
 
       - |
-      if ! aws iam get-role --role-name $ROL_L_S3_ATH >/dev/null 2>&1; then
+        if ! aws iam get-role --role-name $ROL_L_S3_ATH >/dev/null 2>&1; then
           echo "Rol para interactuar con Athena y S3 no existe, creando"
           aws iam create-role --role-name $ROL_L_S3_ATH --assume-role-policy-document file://trust-politica.json;
           aws iam put-role-policy --role-name $ROL_L_S3_ATH --policy-name S3AccesoCompleto --policy-document file://s3-politica.json;
