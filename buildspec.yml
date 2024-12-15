@@ -20,24 +20,23 @@ phases:
       - echo "Instalación de dependencias"
       - mkdir -p python
       - pip install -r requirements.txt -t python --no-cache-dir
-      - mkdir -p statsmodel_package
-      - pip install statsmodels -t statsmodel_package --no-cache-dir
+      - mkdir -p statsmodel_package/python
+      - pip install statsmodels -t statsmodel_package/python --no-cache-dir
   build:
     commands:
       - echo "Paquetes con dependencias y código"
-      - zip -r9 dependencies_layer.zip python -x "*/__pycache__/*" "*.dist-info/*" "*.egg-info/*" || exit 1
+      - zip -r9 dependencies_layer.zip python -x "*/__pycache__/*" "*.dist-info/*" "*.egg-info/*"
       - zip -r9 lambda_yfinance_s3.zip lambda_yfinance_to_dynamo.py || exit 1
       - zip -r9 lambda_ejecutar_notebook.zip lambda_ejecutar_notebook.py || exit 1
       - zip -r9 lambda_s3_athena.zip lambda_s3_to_athena.py || exit 1
       - cd statsmodel_package
-      - zip -r9 ../statsmodels_package.zip -x "*/__pycache__/*" "*.dist-info/*" "*.egg-info/*" || exit 1
+      - zip -r9 statsmodels_package.zip statsmodel_package/python -x "*/__pycache__/*" "*.dist-info/*" "*.egg-info/*"
       - aws s3 cp statsmodels_package.zip s3://$NOMBRE_BUCKET/layers_lambda/statsmodels_package.zip
   post_build:
     commands:
       ################################################################
       ################################################################
       # CREACIÓN DE BASES DE DATOS, S3...
-      # FIXME: crear carpeta y meter el ejecutable de SageMaker
       - echo "Crear DynamoDB si no existe"
       - |
         if ! aws dynamodb describe-table --table-name $DDB_NAME --region $REGION >/dev/null 2>&1; then
