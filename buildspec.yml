@@ -98,7 +98,7 @@ phases:
           aws iam create-role --role-name $ROL_L_S3_ATH --assume-role-policy-document file://trust-politica.json;
           aws iam put-role-policy --role-name $ROL_L_S3_ATH --policy-name S3AccesoCompleto --policy-document file://s3-politica.json;
           aws iam attach-role-policy --role-name $ROL_L_S3_ATH --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole;
-          aws iam attach-role-policy --role-name $ROL_L_S3_ATH --policy-arn arn:aws:iam::aws:policy/service-role/AmazonAthenaFullAccess;
+          aws iam attach-role-policy --role-name $ROL_L_S3_ATH --policy-arn arn:aws:iam::aws:policy/AmazonAthenaFullAccess;
           sleep 10 # Esperar por si acaso
         else
           echo "Rol ya existe"
