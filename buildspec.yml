@@ -62,6 +62,8 @@ phases:
           cd statsmodel_package
           aws s3 cp statsmodels_package.zip s3://$NOM_BUCKET/layers_lambda/
           cd ..
+          aws s3api put-public-access-block --bucket $NOM_BUCKET --public-access-block-configuration "BlockPublicAcls=false,IgnorePublicAcls=false,BlockPublicPolicy=true,RestrictPublicBuckets=true"
+          aws s3api put-bucket-ownership-controls --bucket $NOM_BUCKET --ownership-controls '{"Rules":[{"ObjectOwnership":"ObjectWriter"}]}'
         else
           echo "Bucket S3 ya existe"
         fi
@@ -74,7 +76,7 @@ phases:
         if ! aws iam get-role --role-name $ROL_L_DDB >/dev/null 2>&1; then
           echo "Rol para interactuar con DDB no existe, creando"
           aws iam create-role --role-name $ROL_L_DDB --assume-role-policy-document file://rol-politica-lambda.json;
-          aws iam put-role-policy --role-name $ROL_L_DDB --policy-name DDBAccesoCompleto --policy-document file://politica-ddb.json;
+          aws iam put-role-policy --role-name $ROL_L_DDB --policy-name DDBAcceso --policy-document file://politica-ddb.json;
           aws iam put-role-policy --role-name $ROL_L_DDB --policy-name LambdaInvocar --policy-document file://politica-invocar-lambda.json;
           aws iam attach-role-policy --role-name $ROL_L_DDB --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole;
           sleep 10 # Esperar por si acaso
@@ -86,8 +88,8 @@ phases:
         if ! aws iam get-role --role-name $ROL_L_DDB_S3 >/dev/null 2>&1; then
           echo "Rol para interactuar con DDB y S3 no existe, creando"
           aws iam create-role --role-name $ROL_L_DDB_S3 --assume-role-policy-document file://rol-politica-lambda.json;
-          aws iam put-role-policy --role-name $ROL_L_DDB_S3 --policy-name DDBAccesoCompleto --policy-document file://politica-ddb.json;
-          aws iam put-role-policy --role-name $ROL_L_DDB_S3 --policy-name S3AccesoCompleto --policy-document file://politica-s3.json;
+          aws iam put-role-policy --role-name $ROL_L_DDB_S3 --policy-name DDBAcceso --policy-document file://politica-ddb.json;
+          aws iam put-role-policy --role-name $ROL_L_DDB_S3 --policy-name S3Acceso --policy-document file://politica-s3.json;
           aws iam put-role-policy --role-name $ROL_L_DDB_S3 --policy-name LambdaInvocar --policy-document file://politica-invocar-lambda.json;
           aws iam attach-role-policy --role-name $ROL_L_DDB_S3 --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole;
           sleep 10 # Esperar por si acaso
@@ -99,7 +101,7 @@ phases:
         if ! aws iam get-role --role-name $ROL_L_S3_ATH >/dev/null 2>&1; then
           echo "Rol para interactuar con Athena y S3 no existe, creando"
           aws iam create-role --role-name $ROL_L_S3_ATH --assume-role-policy-document file://rol-politica-lambda.json;
-          aws iam put-role-policy --role-name $ROL_L_S3_ATH --policy-name S3AccesoCompleto --policy-document file://politica-s3.json;
+          aws iam put-role-policy --role-name $ROL_L_S3_ATH --policy-name S3Acceso --policy-document file://politica-s3.json;
           aws iam put-role-policy --role-name $ROL_L_S3_ATH --policy-name GlueLambda --policy-document file://politica-glue.json;
           aws iam attach-role-policy --role-name $ROL_L_S3_ATH --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole;
           aws iam attach-role-policy --role-name $ROL_L_S3_ATH --policy-arn arn:aws:iam::aws:policy/AmazonAthenaFullAccess;
@@ -112,7 +114,7 @@ phases:
         if ! aws iam get-role --role-name $ROL_CRAW >/dev/null 2>&1; then
           echo "Rol para el crawler de Glue no existe, creando"
           aws iam create-role --role-name $ROL_CRAW --assume-role-policy-document file://rol-politica-glue.json;
-          aws iam put-role-policy --role-name $ROL_CRAW --policy-name S3Acceso --policy-document file://politica-s3-crawler.json;
+          aws iam put-role-policy --role-name $ROL_CRAW --policy-name S3AccesoCrawler --policy-document file://politica-s3-crawler.json;
           aws iam attach-role-policy --role-name $ROL_CRAW --policy-arn arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole;
           sleep 10 # Esperar por si acaso
         else

@@ -22,7 +22,25 @@ def lambda_handler(event, context):
     # El primer elemento es la consulta a realizar
     # El segundo el nombre del archivo para guardar la consulta
     lista_queries = [
-        (f"SELECT * FROM {tabla} limit 10;", "prueba")
+        (f"SELECT * FROM {tabla} limit 10;", "general"),
+        (f"""SELECT 'forecast_ibex_inf' AS index_name, fecha AS date, 
+            forecast_ibex_inf AS value FROM {tabla}
+            WHERE forecast_ibex_inf = (SELECT MIN(forecast_ibex_inf) FROM {tabla})
+            UNION ALL SELECT 'forecast_sp500_inf' AS index_name, fecha AS {tabla},
+            forecast_sp500_inf AS value FROM {tabla}
+            WHERE forecast_sp500_inf = (SELECT MIN(forecast_sp500_inf) FROM {tabla})
+            UNION ALL SELECT 'forecast_nikei_inf' AS index_name, fecha AS date,
+            forecast_nikei_inf AS value FROM {tabla}
+            WHERE forecast_nikei_inf = (SELECT MIN(forecast_nikei_inf) FROM {tabla});""", "minimos"),
+        (f"""SELECT 'forecast_ibex_sup' AS index_name, fecha AS date, 
+            forecast_ibex_sup AS value FROM {tabla}
+            WHERE forecast_ibex_sup = (SELECT MAX(forecast_ibex_sup) FROM {tabla})
+            UNION ALL SELECT 'forecast_sp500_sup' AS index_name, fecha AS date,
+            forecast_sp500_sup AS value FROM {tabla}
+            WHERE forecast_sp500_sup = (SELECT MAX(forecast_sp500_sup) FROM {tabla})
+            UNION ALL SELECT 'forecast_nikei_sup' AS index_name, fecha AS date,
+            forecast_nikei_sup AS value FROM {tabla}
+            WHERE forecast_nikei_sup = (SELECT MAX(forecast_nikei_sup) FROM {tabla});""", "maximos")
     ]
     for query in lista_queries:
         queryStart = ath.start_query_execution(
@@ -42,6 +60,7 @@ def lambda_handler(event, context):
         abs_dir_csv = nom_s3 + "/" + dir_csv
         nuevo_csv = f"{carpeta}{query[1]}.csv"
         s3.Object(nom_s3, nuevo_csv).copy_from(CopySource = abs_dir_csv)
+        s3.Object(nom_s3, nuevo_csv).Acl().put(ACL='public-read')
         s3.Object(nom_s3, dir_csv).delete()
         s3.Object(nom_s3, dir_csv + ".metadata").delete()
     return {

@@ -3,7 +3,11 @@
 	"Statement": [
 		{
 			"Effect": "Allow",
-			"Action": "dynamodb:*",
+			"Action": [
+				"dynamodb:Scan",
+				"dynamodb:DeleteItem",
+				"dynamodb:PutItem"
+			],
 			"Resource": "*"
 		}
 	]

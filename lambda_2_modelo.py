@@ -48,7 +48,7 @@ def main():
             pd.DataFrame(
                 {
                     "fecha": ibex_results.get_forecast(steps=5).summary_frame().index,
-                    "forectast_ibex_inf": ibex_results.get_forecast(
+                    "forecast_ibex_inf": ibex_results.get_forecast(
                         steps=5
                     ).summary_frame()["mean_ci_lower"],
                     "forecast_ibex": ibex_results.get_forecast(steps=5).summary_frame()[
@@ -61,7 +61,7 @@ def main():
             ).reset_index(drop=True),
             pd.DataFrame(
                 {
-                    "forectast_sp500_inf": sp500_results.get_forecast(
+                    "forecast_sp500_inf": sp500_results.get_forecast(
                         steps=5
                     ).summary_frame()["mean_ci_lower"],
                     "forecast_sp500": sp500_results.get_forecast(
@@ -74,7 +74,7 @@ def main():
             ).reset_index(drop=True),
             pd.DataFrame(
                 {
-                    "forectast_nikei_inf": nikei_results.get_forecast(
+                    "forecast_nikei_inf": nikei_results.get_forecast(
                         steps=5
                     ).summary_frame()["mean_ci_lower"],
                     "forecast_nikei": nikei_results.get_forecast(
