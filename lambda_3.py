@@ -7,7 +7,7 @@ glue = boto3.client("glue")
 
 def lambda_handler(event, context):
     # Arrancar el Crawler (primero nos aseguramos de que esté parado)
-    crawler = "crawler-prueba" #FIXME luego crawler-datos
+    crawler = "crawler-datos"
     parar_crawler(crawler)
     dormir_crawler(crawler)
     crawler_start = glue.start_crawler(Name=crawler)
@@ -15,7 +15,7 @@ def lambda_handler(event, context):
 
     # Consultas con Athena
     tabla = "datos"
-    base_datos = "bd_prueba"
+    base_datos = "base_athena"
     nom_s3 = "almacenamiento-primario"
     carpeta = "query_results/"
     destino = "s3://" + nom_s3 + "/" + carpeta
