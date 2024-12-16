@@ -85,7 +85,7 @@ phases:
           aws iam create-role --role-name $ROL_L_DDB_S3 --assume-role-policy-document file://trust-politica.json;
           aws iam put-role-policy --role-name $ROL_L_DDB_S3 --policy-name DDBAccesoCompleto --policy-document file://ddb-politica.json;
           aws iam put-role-policy --role-name $ROL_L_DDB_S3 --policy-name S3AccesoCompleto --policy-document file://s3-politica.json;
-          aws iam put-role-policy --role-name $ROL_L_DDB --policy-name LambdaInvocar --policy-document file://invocar-lambda-politica.json;
+          aws iam put-role-policy --role-name $ROL_L_DDB_S3 --policy-name LambdaInvocar --policy-document file://invocar-lambda-politica.json;
           aws iam attach-role-policy --role-name $ROL_L_DDB_S3 --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole;
           sleep 10 # Esperar por si acaso
         else

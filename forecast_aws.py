@@ -26,7 +26,6 @@ def main():
     df_dynamo["fecha"] = pd.to_datetime(df_dynamo["fecha"])
     df_dynamo.set_index("fecha", inplace=True)
     df_dynamo = df_dynamo.sort_values(by="fecha", ascending=True)
-    print(df_dynamo.head())
 
     #FIXME
 

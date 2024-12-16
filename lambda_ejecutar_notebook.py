@@ -1,5 +1,5 @@
 import forecast_aws
-
+import boto3
 
 def lambda_handler(event, context):
     forecast_aws.main()

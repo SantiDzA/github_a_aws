@@ -57,6 +57,8 @@ def lambda_handler(event, context):
         # Insertar cada fila en la tabla
         table.put_item(Item=item)
 
+    invocar_siguiente()
+    
     return {
         'statusCode': 200,
         'body': json.dumps(f'Datos guardados exitosamente en la tabla {DYNAMODB_TABLE_NAME}')
