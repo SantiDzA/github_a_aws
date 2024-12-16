@@ -35,6 +35,6 @@ def main():
 
     # Subir a S3
     bucket_name = "almacenamiento-primario"
-    s3_key = "forecast_stocks.csv"
+    s3_key = "datos/forecast_stocks.csv"
     s3_client.put_object(Bucket=bucket_name, Key=s3_key, Body=csv_buffer.getvalue())
     print(f"Archivo subido a S3: s3://{bucket_name}/{s3_key}")

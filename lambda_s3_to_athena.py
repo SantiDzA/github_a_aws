@@ -1,10 +1,19 @@
 import boto3
 from time import sleep
 
-client = boto3.client("athena")
+ath = boto3.client("athena")
 s3 = boto3.resource("s3")
+glue = boto3.client("glue")
 
 def lambda_handler(event, context):
+    # Arrancar el Crawler (primero nos aseguramos de que esté parado)
+    crawler = "crawler-prueba" #FIXME luego crawler-datos
+    parar_crawler(crawler)
+    dormir_crawler(crawler)
+    crawler_start = glue.start_crawler(Name=crawler)
+    dormir_crawler(crawler)
+
+    # Consultas con Athena
     tabla = "datos"
     base_datos = "bd_prueba"
     nom_s3 = "almacenamiento-primario"
@@ -16,7 +25,7 @@ def lambda_handler(event, context):
         (f"SELECT * FROM {tabla} limit 10;", "prueba")
     ]
     for query in lista_queries:
-        queryStart = client.start_query_execution(
+        queryStart = ath.start_query_execution(
             QueryString = query[0],
             QueryExecutionContext = {
                 "Database": base_datos
@@ -26,7 +35,7 @@ def lambda_handler(event, context):
             }
         )
         query_id = queryStart["QueryExecutionId"]
-        dormir_hasta_fin_consulta(query_id)
+        dormir_athena(query_id)
         
         # Dejamos un archivo CSV con nombre más legible
         dir_csv = f"{carpeta}{query_id}.csv"
@@ -39,10 +48,28 @@ def lambda_handler(event, context):
         'statusCode': 200,
         'body': "Datos guardados con éxito"
     }
-# Función para esperar que la consulta de Athena se complete
-def dormir_hasta_fin_consulta(ident):
+
+# Parar el Crawler en caso de que esté funcionando
+def parar_crawler(name):
+    rs = glue.get_crawler(Name=name)
+    state = rs['Crawler']['State']
+    if state == "RUNNING":
+        glue.stop_crawler(Name=name)
+    sleep(1) 
+
+# Función para esperar a que el Crawler acabe
+def dormir_crawler(name):
     while True:
-        rs = client.get_query_execution(QueryExecutionId=ident)
+        rs = glue.get_crawler(Name=name)
+        state = rs['Crawler']['State']
+        if state == "READY":
+            break
+        sleep(1) 
+
+# Función para esperar que la consulta de Athena se complete
+def dormir_athena(ident):
+    while True:
+        rs = ath.get_query_execution(QueryExecutionId=ident)
         state = rs['QueryExecution']['Status']['State']
         if state in ['SUCCEEDED', 'FAILED', 'CANCELLED']:
             break
