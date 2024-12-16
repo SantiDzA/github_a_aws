@@ -69,9 +69,9 @@ def invocar_siguiente():
     client = boto3.client('lambda')
     try:
         client.invoke(
-            FunctionName="ejecutar_notebook",
+            FunctionName="lambda_2",
             InvocationType='Event'
         )
-        print(f"Lambda 'ejecutar_notebook' invocada exitosamente.")
+        print(f"Lambda 'lambda_2' invocada exitosamente.")
     except Exception as e:
-        print(f"Error al invocar Lambda 'ejecutar_notebook': {str(e)}")
+        print(f"Error al invocar Lambda 'lambda_2': {str(e)}")

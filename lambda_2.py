@@ -1,8 +1,8 @@
-import forecast_aws
+import lambda_2_modelo
 import boto3
 
 def lambda_handler(event, context):
-    forecast_aws.main()
+    lambda_2_modelo.main()
     invocar_siguiente()
     return {"statusCode": 200, "body": "Predicción realizada correctamente"}
 
@@ -11,9 +11,9 @@ def invocar_siguiente():
     client = boto3.client('lambda')
     try:
         client.invoke(
-            FunctionName="s3_a_athena",
+            FunctionName="lambda_3",
             InvocationType='Event'
         )
-        print(f"Lambda 's3_a_athena' invocada exitosamente.")
+        print(f"Lambda 'lambda_3' invocada exitosamente.")
     except Exception as e:
-        print(f"Error al invocar Lambda 's3_a_athena': {str(e)}")
+        print(f"Error al invocar Lambda 'lambda_3': {str(e)}")
