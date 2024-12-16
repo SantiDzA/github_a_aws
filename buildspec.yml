@@ -1,9 +1,9 @@
 version: 0.2
 env:
   variables:
-    PRIMERA_LAMBDA: "yfinance_a_ddb"
-    SEGUNDA_LAMBDA: "ejecutar_notebook"
-    TERCERA_LAMBDA: "s3_a_athena"
+    PRIMERA_LAMBDA: "lambda_1"
+    SEGUNDA_LAMBDA: "lambda_2"
+    TERCERA_LAMBDA: "lambda_3"
     CAPA_PD_YF: "capa_pd_yf"
     REGION: "us-east-1"
     ROL_L_DDB: "rol-l_ddb"
@@ -147,11 +147,11 @@ phases:
       ################################################################
       # LAMBDAS
 
-      - echo "Actualizar la Lambda Yfinance -> DynamoDB, si no crearla"
+      - echo "Actualizar la Lambda 1, si no crearla"
       - |
         if ! aws lambda get-function --function-name $PRIMERA_LAMBDA >/dev/null 2>&1; then
           echo "Función no existe, creando"
-          aws lambda create-function --function-name $PRIMERA_LAMBDA --runtime python3.13 --role arn:aws:iam::$COD_USER:role/$ROL_L_DDB --handler lambda_1.lambda_handler --zip-file fileb://lambda_1.zip --timeout 30 --memory-size 256
+          aws lambda create-function --function-name $PRIMERA_LAMBDA --runtime python3.13 --role arn:aws:iam::$COD_USER:role/$ROL_L_DDB --handler lambda_1.lambda_handler --zip-file fileb://lambda_1.zip --timeout 60 --memory-size 256
           aws lambda wait function-active --function-name $PRIMERA_LAMBDA
         else
           echo "Función ya creada, actualizando..."
@@ -160,11 +160,11 @@ phases:
         fi
         aws lambda update-function-configuration --function-name $PRIMERA_LAMBDA --layers arn:aws:lambda:us-east-1:$COD_USER:layer:$CAPA_PD_YF:$LAYER_VERSION || exit 1
 
-      - echo "Actualizar la Lambda Ejecutar Notebook, si no crearla"
+      - echo "Actualizar la Lambda 2, si no crearla"
       - |
         if ! aws lambda get-function --function-name $SEGUNDA_LAMBDA >/dev/null 2>&1; then
           echo "Función no existe, creando"
-          aws lambda create-function --function-name $SEGUNDA_LAMBDA --runtime python3.13 --role arn:aws:iam::$COD_USER:role/$ROL_L_DDB_S3 --handler lambda_2.lambda_handler --zip-file fileb://lambda_2.zip --timeout 30 --memory-size 256
+          aws lambda create-function --function-name $SEGUNDA_LAMBDA --runtime python3.13 --role arn:aws:iam::$COD_USER:role/$ROL_L_DDB_S3 --handler lambda_2.lambda_handler --zip-file fileb://lambda_2.zip --timeout 180 --memory-size 256
           aws lambda wait function-active --function-name $SEGUNDA_LAMBDA
         else
           echo "Función ya creada, actualizando..."
@@ -173,11 +173,11 @@ phases:
         fi
         aws lambda update-function-configuration --function-name $SEGUNDA_LAMBDA --layers arn:aws:lambda:us-east-1:$COD_USER:layer:$CAPA_PD_YF:$LAYER_VERSION || exit 1
 
-      - echo "Actualizar la Lambda S3 to Athena, si no crearla"
+      - echo "Actualizar la Lambda 3, si no crearla"
       - |
         if ! aws lambda get-function --function-name $TERCERA_LAMBDA >/dev/null 2>&1; then
           echo "Función no existe, creando"
-          aws lambda create-function --function-name $TERCERA_LAMBDA --runtime python3.13 --role arn:aws:iam::$COD_USER:role/$ROL_L_S3_ATH --handler lambda_3.lambda_handler --zip-file fileb://lambda_3.zip --timeout 30 --memory-size 256
+          aws lambda create-function --function-name $TERCERA_LAMBDA --runtime python3.13 --role arn:aws:iam::$COD_USER:role/$ROL_L_S3_ATH --handler lambda_3.lambda_handler --zip-file fileb://lambda_3.zip --timeout 300 --memory-size 256
           aws lambda wait function-active --function-name $TERCERA_LAMBDA
         else
           echo "Función ya creada, actualizando..."
