@@ -7,10 +7,11 @@ from decimal import Decimal
 # Cliente para DynamoDB
 dynamodb = boto3.resource('dynamodb')
 
-# Nombre de la tabla de DynamoDB
-DYNAMODB_TABLE_NAME = 'my_finance_table'
-
 def lambda_handler(event, context):
+    # Conexión a la tabla de DynamoDB
+    nombre_tabla = "my_finance_table"
+    table = dynamodb.Table(nombre_tabla)
+
     # Datos
     start_time = (pd.Timestamp.today() - pd.DateOffset(years=1)).strftime('%Y-%m-%d')
     end_time = pd.Timestamp.today().strftime('%Y-%m-%d')
@@ -28,9 +29,6 @@ def lambda_handler(event, context):
     # Fusionar los datos
     final_stock_values = pd.merge(stock_list[0], stock_list[1], how='left', on='fecha')
     final_stock_values = pd.merge(final_stock_values, stock_list[2], how='left', on='fecha')
-
-    # Conectar a la tabla de DynamoDB
-    table = dynamodb.Table(DYNAMODB_TABLE_NAME)
 
     # Eliminar los datos previos de la tabla basados en la fecha
     for index, row in final_stock_values.iterrows():
@@ -61,7 +59,7 @@ def lambda_handler(event, context):
     
     return {
         'statusCode': 200,
-        'body': json.dumps(f'Datos guardados exitosamente en la tabla {DYNAMODB_TABLE_NAME}')
+        'body': json.dumps(f'Datos guardados exitosamente en la tabla {nombre_tabla}')
     }
 
 def invocar_siguiente():
